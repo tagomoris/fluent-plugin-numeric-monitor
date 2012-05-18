@@ -1,29 +1,39 @@
-# Fluent::Plugin::Numeric::Aggregator
+# fluent-plugin-numeric-monitor
 
-TODO: Write a gem description
+## Component
 
-## Installation
+### NumericMonitorOutput
 
-Add this line to your application's Gemfile:
+Plugin to calculate min/max/avg and specified percentile values, which used in notifications (such as fluent-plugin-notifier)
 
-    gem 'fluent-plugin-numeric-aggregator'
+## Configuration
 
-And then execute:
+### NumericMonitorOutput
 
-    $ bundle
+To calculate about HTTP requests duration (microseconds) in 'duraion', with 90 and 95 percentile values:
 
-Or install it yourself as:
+    <match apache.log.**>
+      type numeric_monitor
+      unit minute
+      tag monitor.duration
+      aggregate all
+      input_tag_remove_prefix apache.log
+      monitor_key duration
+      percentiles 90,95
+    </match>
 
-    $ gem install fluent-plugin-numeric-aggregator
+Output messages like:
 
-## Usage
+    {"min":3012,"max":913243,"avg":100123.51,"percentile_90":154390,"percentile_95":223110}
 
-TODO: Write usage instructions here
+## TODO
 
-## Contributing
+* more tests
+* more documents
 
-1. Fork it
-2. Create your feature branch (`git checkout -b my-new-feature`)
-3. Commit your changes (`git commit -am 'Added some feature'`)
-4. Push to the branch (`git push origin my-new-feature`)
-5. Create new Pull Request
+## Copyright
+
+* Copyright
+  * Copyright (c) 2012- TAGOMORI Satoshi (tagomoris)
+* License
+  * Apache License, Version 2.0
