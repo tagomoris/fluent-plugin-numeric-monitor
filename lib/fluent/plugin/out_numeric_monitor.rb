@@ -71,7 +71,7 @@ class Fluent::NumericMonitorOutput < Fluent::Output
     @last_checked = Fluent::Engine.now
     while true
       sleep 0.5
-      if Fluent::Engine.now - @last_checked
+      if Fluent::Engine.now - @last_checked > @count_interval
         now = Fluent::Engine.now
         flush_emit
         @last_checked = now
