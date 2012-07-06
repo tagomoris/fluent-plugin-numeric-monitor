@@ -110,6 +110,7 @@ class Fluent::NumericMonitorOutput < Fluent::Output
     output = {}
     if @aggregate == :all
       c = count['all']
+      if c[:num] then output['num'] = c[:num] end
       if c[:min] then output['min'] = c[:min] end
       if c[:max] then output['max'] = c[:max] end
       if c[:num] > 0 then output['avg'] = (c[:sum] * 100.0 / (c[:num] * 1.0)).round / 100 end
@@ -126,6 +127,7 @@ class Fluent::NumericMonitorOutput < Fluent::Output
     count.keys.each do |tag|
       t = stripped_tag(tag)
       c = count[tag]
+      if c[:num] then output[t + '_num'] = c[:num] end
       if c[:min] then output[t + '_min'] = c[:min] end
       if c[:max] then output[t + '_max'] = c[:max] end
       if c[:num] > 0 then output[t + '_avg'] = (c[:sum] * 100.0 / (c[:num] * 1.0)).round / 100.0 end

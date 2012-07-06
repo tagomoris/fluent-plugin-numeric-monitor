@@ -62,5 +62,6 @@ class NumericMonitorOutputTest < Test::Unit::TestCase
     assert_equal 4.5, r1['tag1_avg']
     assert_equal 7, r1['tag1_percentile_80']
     assert_equal 8, r1['tag1_percentile_90']
+    assert_equal 100, r1['tag1_num']
   end
 end
