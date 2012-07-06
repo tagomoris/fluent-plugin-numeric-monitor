@@ -4,7 +4,7 @@
 
 ### NumericMonitorOutput
 
-Plugin to calculate min/max/avg and specified percentile values, which used in notifications (such as fluent-plugin-notifier)
+Plugin to calculate min/max/avg and specified percentile values (and 'num' of matched messages), which used in notifications (such as fluent-plugin-notifier)
 
 ## Configuration
 
@@ -24,7 +24,7 @@ To calculate about HTTP requests duration (microseconds) in 'duraion', with 90 a
 
 Output messages like:
 
-    {"min":3012,"max":913243,"avg":100123.51,"percentile_90":154390,"percentile_95":223110}
+    {"min":3012,"max":913243,"avg":100123.51,"percentile_90":154390,"percentile_95":223110,"num":50012}
 
 ## TODO
 
