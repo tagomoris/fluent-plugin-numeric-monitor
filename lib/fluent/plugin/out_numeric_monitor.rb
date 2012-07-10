@@ -195,6 +195,12 @@ class Fluent::NumericMonitorOutput < Fluent::Output
       next if value.nil?
 
       value = value.to_f
+
+      if value > 500000000
+        p(Fluent::Engine.now)
+        p(record)
+      end
+
       if min.nil? or min > value
         min = value
       end
