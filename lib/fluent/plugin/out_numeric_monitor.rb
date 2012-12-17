@@ -208,7 +208,7 @@ class Fluent::NumericMonitorOutput < Fluent::Output
         sample.push(value)
       end
     end
-    if sample.size > @samples_limit
+    if @percentiles && sample.size > @samples_limit
       (sample.size - @samples_limit / 2).to_i.times do
         sample.delete_at(rand(sample.size))
       end

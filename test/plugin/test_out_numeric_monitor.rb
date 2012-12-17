@@ -64,4 +64,22 @@ class NumericMonitorOutputTest < Test::Unit::TestCase
     assert_equal 8, r1['tag1_percentile_90']
     assert_equal 100, r1['tag1_num']
   end
+
+  def test_without_percentiles
+    d = create_driver(%[
+      unit minute
+      tag testmonitor
+      monitor_key x1
+    ], 'test')
+    d.run do
+      d.emit({'x1' => 1})
+      d.emit({'x1' => 2})
+      d.emit({'x1' => 3})
+    end
+    r = d.instance.flush
+    assert_equal 1, r['test_min']
+    assert_equal 3, r['test_max']
+    assert_equal 2, r['test_avg']
+    assert_equal 3, r['test_num']
+  end
 end
