@@ -113,12 +113,15 @@ class Fluent::NumericMonitorOutput < Fluent::Output
       if c[:num] then output['num'] = c[:num] end
       if c[:min] then output['min'] = c[:min] end
       if c[:max] then output['max'] = c[:max] end
-      if c[:num] > 0 then output['avg'] = (c[:sum] * 100.0 / (c[:num] * 1.0)).round / 100 end
+      if c[:num] > 0 then output['avg'] = (c[:sum] * 100.0 / (c[:num] * 1.0)).round / 100.0 end
       if @percentiles
         sorted = c[:sample].sort
         @percentiles.each do |p|
           i = (c[:num] * p / 100).floor
-          output["percentile_#{p}"] = c[:sample][i]
+          if i > 0
+            i -= 1
+          end
+          output["percentile_#{p}"] = sorted[i]
         end
       end
       return output

@@ -65,6 +65,39 @@ class NumericMonitorOutputTest < Test::Unit::TestCase
     assert_equal 100, r1['tag1_num']
   end
 
+  def test_emit_aggregate_all
+    d1 = create_driver(%[
+      unit minute
+      tag monitor.test
+      input_tag_remove_prefix test
+      aggregate all
+      monitor_key field1
+      percentiles 80,90
+    ], 'test.tag1')
+
+    d1.run do
+      10.times do
+        d1.emit({'field1' => 0})
+        d1.emit({'field1' => '1'})
+        d1.emit({'field1' => 2})
+        d1.emit({'field1' => '3'})
+        d1.emit({'field1' => 4})
+        d1.emit({'field1' => 5})
+        d1.emit({'field1' => 6})
+        d1.emit({'field1' => 7})
+        d1.emit({'field1' => 8})
+        d1.emit({'field1' => 9})
+      end
+    end
+    r1 = d1.instance.flush
+    assert_equal 0, r1['min']
+    assert_equal 9, r1['max']
+    assert_equal 4.5, r1['avg']
+    assert_equal 7, r1['percentile_80']
+    assert_equal 8, r1['percentile_90']
+    assert_equal 100, r1['num']
+  end
+
   def test_without_percentiles
     d = create_driver(%[
       unit minute
