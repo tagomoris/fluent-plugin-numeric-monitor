@@ -17,6 +17,7 @@ class Fluent::NumericMonitorOutput < Fluent::Output
   end
   config_param :input_tag_remove_prefix, :string, :default => nil
   config_param :monitor_key, :string
+  config_param :output_key_prefix, :string, :default => nil
   config_param :percentiles, :default => nil do |val|
     values = val.split(",").map(&:to_i)
     if values.select{|i| i < 1 or i > 99 }.size > 0
@@ -128,7 +129,7 @@ class Fluent::NumericMonitorOutput < Fluent::Output
     end
 
     count.keys.each do |tag|
-      t = stripped_tag(tag)
+      t = @output_key_prefix ? @output_key_prefix : stripped_tag(tag)
       c = count[tag]
       if c[:num] then output[t + '_num'] = c[:num] end
       if c[:min] then output[t + '_min'] = c[:min] end

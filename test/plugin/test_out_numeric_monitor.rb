@@ -115,4 +115,22 @@ class NumericMonitorOutputTest < Test::Unit::TestCase
     assert_equal 2, r['test_avg']
     assert_equal 3, r['test_num']
   end
+
+  def test_output_key_prefix
+    d = create_driver(%[
+      unit minute
+      monitor_key x1
+      output_key_prefix prefix
+    ], 'tag')
+    d.run do
+      d.emit({'x1' => 1})
+      d.emit({'x1' => 2})
+      d.emit({'x1' => 3})
+    end
+    r = d.instance.flush
+    assert_equal 1, r['prefix_min']
+    assert_equal 3, r['prefix_max']
+    assert_equal 2, r['prefix_avg']
+    assert_equal 3, r['prefix_num']
+  end
 end
