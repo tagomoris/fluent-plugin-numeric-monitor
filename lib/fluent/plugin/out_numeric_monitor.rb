@@ -123,10 +123,10 @@ class Fluent::NumericMonitorOutput < Fluent::Output
   end
 
   def generate_fields(count, key_prefix = '', output = {})
-    if count[:num] then output[key_prefix + 'num'] = count[:num] end
-    if count[:min] then output[key_prefix + 'min'] = count[:min] end
-    if count[:max] then output[key_prefix + 'max'] = count[:max] end
-    if count[:num] > 0 then output[key_prefix + 'avg'] = (count[:sum] / (count[:num] * 1.0)) end
+    output[key_prefix + 'num'] = count[:num] if count[:num]
+    output[key_prefix + 'min'] = count[:min] if count[:min]
+    output[key_prefix + 'max'] = count[:max] if count[:max]
+    output[key_prefix + 'avg'] = (count[:sum] / (count[:num] * 1.0)) if count[:num] > 0
     if @percentiles
       sorted = count[:sample].sort
       @percentiles.each do |p|
