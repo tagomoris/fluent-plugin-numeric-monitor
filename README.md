@@ -26,6 +26,54 @@ Output messages like:
 
     {"min":3012,"max":913243,"avg":100123.51,"percentile_90":154390,"percentile_95":223110,"num":50012}
 
+
+## Parameters
+
+* monitor\_key (required)
+
+    The key to monitor in the event record.
+    
+* percentiles
+
+    Activate the percentile monitoring. Must be specified between `1` and `99` by integer separeted by , (comma). 
+
+* tag
+
+    The output tag. Default is `monitor`. 
+
+* tag\_prefix
+
+    The prefix string which will be added to the input tag. `output_per_tag yes` must be specified together. 
+    
+* input\_tag\_remove\_prefix
+
+    The prefix string which will be removed from the input tag. 
+
+* count\_interval
+
+    The interval time to monitor in seconds. Default is `60`. 
+    
+* unit
+
+    The interval time to monitor specified an unit (either of `minute`, `hour`, or `day`). 
+    Use either of `count_interval` or `unit`.
+    
+* aggregate
+
+    Calculate in each input `tag` separetely, or `all` records in a mass. Default is `tag`
+    
+* ouput\_per\_tag
+
+    Emit for each input tag. `tag_prefix` must be specified together. Default is `no`. 
+
+* output\_key\_prefix
+
+    The prefix string which will be added to the output key. 
+    
+* samples\_limit
+
+    The limit number of sampling. Default is `1000000`. 
+
 ## TODO
 
 * more tests
