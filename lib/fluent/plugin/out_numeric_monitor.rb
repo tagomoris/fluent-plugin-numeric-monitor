@@ -6,7 +6,9 @@ class Fluent::NumericMonitorOutput < Fluent::Output
   config_param :count_interval, :time, :default => 60
   config_param :unit, :string, :default => nil
   config_param :tag, :string, :default => 'monitor'
+  config_param :tag_prefix, :string, :default => nil
 
+  config_param :output_per_tag, :bool, :default => false
   config_param :aggregate, :default => 'tag' do |val|
     case val
     when 'tag' then :tag
@@ -17,6 +19,7 @@ class Fluent::NumericMonitorOutput < Fluent::Output
   end
   config_param :input_tag_remove_prefix, :string, :default => nil
   config_param :monitor_key, :string
+  config_param :output_key_prefix, :string, :default => nil
   config_param :percentiles, :default => nil do |val|
     values = val.split(",").map(&:to_i)
     if values.select{|i| i < 1 or i > 99 }.size > 0
@@ -46,6 +49,16 @@ class Fluent::NumericMonitorOutput < Fluent::Output
       @removed_prefix_string = @input_tag_remove_prefix + '.'
       @removed_length = @removed_prefix_string.length
     end
+
+    @key_prefix_string = ''
+    if @output_key_prefix
+      @key_prefix_string = @output_key_prefix + '_'
+    end
+
+    if (@output_per_tag || @tag_prefix) && (!@output_per_tag || !@tag_prefix)
+      raise Fluent::ConfigError, 'Specify both of output_per_tag and tag_prefix'
+    end
+    @tag_prefix_string = @tag_prefix + '.' if @output_per_tag
     
     @count = count_initialized
     @mutex = Mutex.new
@@ -106,42 +119,46 @@ class Fluent::NumericMonitorOutput < Fluent::Output
     tag
   end
 
-  def generate_output(count)
-    output = {}
-    if @aggregate == :all
-      c = count['all']
-      if c[:num] then output['num'] = c[:num] end
-      if c[:min] then output['min'] = c[:min] end
-      if c[:max] then output['max'] = c[:max] end
-      if c[:num] > 0 then output['avg'] = (c[:sum] / (c[:num] * 1.0)) end
-      if @percentiles
-        sorted = c[:sample].sort
-        @percentiles.each do |p|
-          i = (c[:num] * p / 100).floor
-          if i > 0
-            i -= 1
-          end
-          output["percentile_#{p}"] = sorted[i]
+  def generate_fields(count, key_prefix = '', output = {})
+    output[key_prefix + 'num'] = count[:num] if count[:num]
+    output[key_prefix + 'min'] = count[:min] if count[:min]
+    output[key_prefix + 'max'] = count[:max] if count[:max]
+    output[key_prefix + 'avg'] = (count[:sum] / (count[:num] * 1.0)) if count[:num] > 0
+    if @percentiles
+      sorted = count[:sample].sort
+      @percentiles.each do |p|
+        i = (count[:num] * p / 100).floor
+        if i > 0
+          i -= 1
         end
+        output[key_prefix + "percentile_#{p}"] = sorted[i]
       end
-      return output
     end
+    output
+  end
 
-    count.keys.each do |tag|
-      t = stripped_tag(tag)
-      c = count[tag]
-      if c[:num] then output[t + '_num'] = c[:num] end
-      if c[:min] then output[t + '_min'] = c[:min] end
-      if c[:max] then output[t + '_max'] = c[:max] end
-      if c[:num] > 0 then output[t + '_avg'] = (c[:sum] / (c[:num] * 1.0)) end
-      if @percentiles
-        sorted = c[:sample].sort
-        @percentiles.each do |p|
-          i = (c[:num] * p / 100).floor
-          if i > 0
-            i -= 1
-          end
-          output[t + "_percentile_#{p}"] = sorted[i]
+  def generate_output(count)
+    if @aggregate == :all
+      if @output_per_tag
+        # tag_prefix_all: { 'key_prefix_min' => -10, 'key_prefix_max' => 10, ... } }
+        output = {'all' => generate_fields(count['all'], @key_prefix_string)}
+      else
+        # tag: { 'key_prefix_min' => -10, 'key_prefix_max' => 10, ... }
+        output = generate_fields(count['all'], @key_prefix_string)
+      end
+    else
+      output = {}
+      if @output_per_tag
+        # tag_prefix_tag1: { 'key_prefix_min' => -10, 'key_prefix_max' => 10, ... }
+        # tag_prefix_tag2: { 'key_prefix_min' => -10, 'key_prefix_max' => 10, ... }
+        count.keys.each do |tag|
+          output[stripped_tag(tag)] = generate_fields(count[tag], @key_prefix_string)
+        end
+      else
+        # tag: { 'key_prefix_tag1_min' => -10, 'key_prefix_tag1_max' => 10, ..., 'key_prefix_tag2_min' => -10, 'key_prefix_tag2_max' => 10, ... }
+        count.keys.each do |tag|
+          key_prefix = @key_prefix_string + stripped_tag(tag) + '_'
+          generate_fields(count[tag], key_prefix, output)
         end
       end
     end
@@ -154,7 +171,14 @@ class Fluent::NumericMonitorOutput < Fluent::Output
   end
 
   def flush_emit
-    Fluent::Engine.emit(@tag, Fluent::Engine.now, flush)
+    if @output_per_tag
+      time = Fluent::Engine.now
+      flush.each do |tag, message|
+        Fluent::Engine.emit(@tag_prefix_string + tag, time, message)
+      end
+    else
+      Fluent::Engine.emit(@tag, Fluent::Engine.now, flush)
+    end
   end
 
   def countups(tag, min, max, sum, num, sample)
