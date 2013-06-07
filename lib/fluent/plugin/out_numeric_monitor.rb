@@ -55,13 +55,10 @@ class Fluent::NumericMonitorOutput < Fluent::Output
       @key_prefix_string = @output_key_prefix + '_'
     end
 
-    if @output_per_tag
-      raise Fluent::ConfigError, "tag_prefix must be specified with output_per_tag" unless @tag_prefix
-      @tag_prefix_string = @tag_prefix + '.'
+    if (@output_per_tag || @tag_prefix) && (!@output_per_tag || !@tag_prefix)
+      raise Fluent::ConfigError, 'Specify both of output_per_tag and tag_prefix'
     end
-    if @tag_prefix
-      raise Fluent::ConfigError, "output_per_tag must be specified with tag_prefix" unless @output_per_tag
-    end
+    @tag_prefix_string = @tag_prefix + '.' if @output_per_tag
     
     @count = count_initialized
     @mutex = Mutex.new
