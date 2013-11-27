@@ -62,7 +62,7 @@ Output messages like:
 
     Calculate in each input `tag` separetely, or `all` records in a mass. Default is `tag`
     
-* ouput\_per\_tag
+* output\_per\_tag
 
     Emit for each input tag. `tag_prefix` must be specified together. Default is `no`. 
 
