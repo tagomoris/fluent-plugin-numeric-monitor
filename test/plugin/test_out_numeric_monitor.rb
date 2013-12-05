@@ -73,6 +73,7 @@ class NumericMonitorOutputTest < Test::Unit::TestCase
     assert_equal 0, r1['tag1_min']
     assert_equal 9, r1['tag1_max']
     assert_equal 4.5, r1['tag1_avg']
+    assert_equal 450, r1['tag1_sum']
     assert_equal 7, r1['tag1_percentile_80']
     assert_equal 8, r1['tag1_percentile_90']
     assert_equal 100, r1['tag1_num']
@@ -106,6 +107,7 @@ class NumericMonitorOutputTest < Test::Unit::TestCase
     assert_equal 0, r1['min']
     assert_equal 9, r1['max']
     assert_equal 4.5, r1['avg']
+    assert_equal 450, r1['sum']
     assert_equal 7, r1['percentile_80']
     assert_equal 8, r1['percentile_90']
     assert_equal 100, r1['num']
@@ -126,6 +128,7 @@ class NumericMonitorOutputTest < Test::Unit::TestCase
     assert_equal 1, r['test_min']
     assert_equal 3, r['test_max']
     assert_equal 2, r['test_avg']
+    assert_equal 6, r['test_sum']
     assert_equal 3, r['test_num']
   end
 
@@ -152,12 +155,14 @@ class NumericMonitorOutputTest < Test::Unit::TestCase
     assert_equal 1, r['min']
     assert_equal 3, r['max']
     assert_equal 2, r['avg']
+    assert_equal 6, r['sum']
     assert_equal 3, r['num']
     tag, r = d.emits[1][0], d.emits[1][2]
     assert_equal 'tag_prefix.tag2', tag
     assert_equal 1, r['min']
     assert_equal 3, r['max']
     assert_equal 2, r['avg']
+    assert_equal 6, r['sum']
     assert_equal 3, r['num']
 
     d = create_driver(CONFIG + %[
@@ -182,10 +187,12 @@ class NumericMonitorOutputTest < Test::Unit::TestCase
     assert_equal 1, r['tag1_min']
     assert_equal 3, r['tag1_max']
     assert_equal 2, r['tag1_avg']
+    assert_equal 6, r['tag1_sum']
     assert_equal 3, r['tag1_num']
     assert_equal 1, r['tag2_min']
     assert_equal 3, r['tag2_max']
     assert_equal 2, r['tag2_avg']
+    assert_equal 6, r['tag1_sum']
     assert_equal 3, r['tag2_num']
 
     d = create_driver(CONFIG + %[
@@ -211,6 +218,7 @@ class NumericMonitorOutputTest < Test::Unit::TestCase
     assert_equal 1, r['min']
     assert_equal 3, r['max']
     assert_equal 2, r['avg']
+    assert_equal 12, r['sum']
     assert_equal 6, r['num']
 
     d = create_driver(CONFIG + %[
@@ -236,6 +244,7 @@ class NumericMonitorOutputTest < Test::Unit::TestCase
     assert_equal 1, r['min']
     assert_equal 3, r['max']
     assert_equal 2, r['avg']
+    assert_equal 12, r['sum']
     assert_equal 6, r['num']
   end
 
@@ -263,12 +272,14 @@ class NumericMonitorOutputTest < Test::Unit::TestCase
     assert_equal 1, r['key_prefix_min']
     assert_equal 3, r['key_prefix_max']
     assert_equal 2, r['key_prefix_avg']
+    assert_equal 6, r['key_prefix_sum']
     assert_equal 3, r['key_prefix_num']
     tag, r = d.emits[1][0], d.emits[1][2]
     assert_equal 'tag_prefix.tag2', tag
     assert_equal 1, r['key_prefix_min']
     assert_equal 3, r['key_prefix_max']
     assert_equal 2, r['key_prefix_avg']
+    assert_equal 6, r['key_prefix_sum']
     assert_equal 3, r['key_prefix_num']
 
     d = create_driver(CONFIG + %[
@@ -294,10 +305,12 @@ class NumericMonitorOutputTest < Test::Unit::TestCase
     assert_equal 1, r['key_prefix_tag1_min']
     assert_equal 3, r['key_prefix_tag1_max']
     assert_equal 2, r['key_prefix_tag1_avg']
+    assert_equal 6, r['key_prefix_tag1_sum']
     assert_equal 3, r['key_prefix_tag1_num']
     assert_equal 1, r['key_prefix_tag2_min']
     assert_equal 3, r['key_prefix_tag2_max']
     assert_equal 2, r['key_prefix_tag2_avg']
+    assert_equal 6, r['key_prefix_tag2_sum']
     assert_equal 3, r['key_prefix_tag2_num']
 
     d = create_driver(CONFIG + %[
@@ -324,6 +337,7 @@ class NumericMonitorOutputTest < Test::Unit::TestCase
     assert_equal 1, r['key_prefix_min']
     assert_equal 3, r['key_prefix_max']
     assert_equal 2, r['key_prefix_avg']
+    assert_equal 12, r['key_prefix_sum']
     assert_equal 6, r['key_prefix_num']
 
     d = create_driver(CONFIG + %[
@@ -350,6 +364,7 @@ class NumericMonitorOutputTest < Test::Unit::TestCase
     assert_equal 1, r['key_prefix_min']
     assert_equal 3, r['key_prefix_max']
     assert_equal 2, r['key_prefix_avg']
+    assert_equal 12, r['key_prefix_sum']
     assert_equal 6, r['key_prefix_num']
   end
 end
