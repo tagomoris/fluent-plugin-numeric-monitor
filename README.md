@@ -1,10 +1,10 @@
-# fluent-plugin-numeric-monitor, a plugin for [Fluentd](http://fluentd.org)
+# fluent-plugin-numeric-monitor
 
 ## Component
 
 ### NumericMonitorOutput
 
-Plugin to calculate min/max/avg/sum and specified percentile values (and 'num' of matched messages), which used in notifications (such as fluent-plugin-notifier)
+[Fluentd](http://fluentd.org) plugin to calculate min/max/avg/sum and specified percentile values (and 'num' of matched messages), which used in notifications (such as fluent-plugin-notifier)
 
 ## Configuration
 
