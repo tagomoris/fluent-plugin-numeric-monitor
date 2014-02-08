@@ -1,4 +1,4 @@
-# fluent-plugin-numeric-monitor
+# fluent-plugin-numeric-monitor, a plugin for [Fluentd](http://fluentd.org)
 
 ## Component
 
