@@ -1,6 +1,11 @@
 class Fluent::NumericMonitorOutput < Fluent::Output
   Fluent::Plugin.register_output('numeric_monitor', self)
 
+  # Define `log` method for v0.10.42 or earlier
+  unless method_defined?(:log)
+    define_method("log") { $log }
+  end
+
   EMIT_STREAM_RECORDS = 100
 
   config_param :count_interval, :time, :default => 60
