@@ -34,6 +34,7 @@ class Fluent::NumericMonitorOutput < Fluent::Output
   end
 
   config_param :samples_limit, :integer, :default => 1000000
+  config_param :interval, :float, :default => 0.5
 
   attr_accessor :count, :last_checked
 
@@ -88,8 +89,8 @@ class Fluent::NumericMonitorOutput < Fluent::Output
   def watch
     @last_checked = Fluent::Engine.now
     while true
-      sleep 0.5
-      if Fluent::Engine.now - @last_checked > @count_interval
+      sleep @interval
+      if Fluent::Engine.now - @last_checked >= @count_interval
         now = Fluent::Engine.now
         flush_emit
         @last_checked = now
