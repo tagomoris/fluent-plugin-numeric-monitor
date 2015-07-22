@@ -8,13 +8,21 @@ class Fluent::NumericMonitorOutput < Fluent::Output
 
   EMIT_STREAM_RECORDS = 100
 
-  config_param :count_interval, :time, :default => 60
-  config_param :unit, :string, :default => nil
-  config_param :tag, :string, :default => 'monitor'
-  config_param :tag_prefix, :string, :default => nil
+  config_param :count_interval, :time, default: 60
+  config_param :unit, default: nil do |value|
+    case value
+    when 'minute' then 60
+    when 'hour' then 3600
+    when 'day' then 86400
+    else
+      raise Fluent::ConfigError, "unit must be one of minute/hour/day"
+    end
+  end
+  config_param :tag, :string, default: 'monitor'
+  config_param :tag_prefix, :string, default: nil
 
-  config_param :output_per_tag, :bool, :default => false
-  config_param :aggregate, :default => 'tag' do |val|
+  config_param :output_per_tag, :bool, default: false
+  config_param :aggregate, default: 'tag' do |val|
     case val
     when 'tag' then :tag
     when 'all' then :all
@@ -22,10 +30,10 @@ class Fluent::NumericMonitorOutput < Fluent::Output
       raise Fluent::ConfigError, "aggregate MUST be one of 'tag' or 'all'"
     end
   end
-  config_param :input_tag_remove_prefix, :string, :default => nil
+  config_param :input_tag_remove_prefix, :string, default: nil
   config_param :monitor_key, :string
-  config_param :output_key_prefix, :string, :default => nil
-  config_param :percentiles, :default => nil do |val|
+  config_param :output_key_prefix, :string, default: nil
+  config_param :percentiles, default: nil do |val|
     values = val.split(",").map(&:to_i)
     if values.select{|i| i < 1 or i > 99 }.size > 0
       raise Fluent::ConfigError, "percentiles MUST be specified between 1 and 99 by integer"
@@ -33,23 +41,15 @@ class Fluent::NumericMonitorOutput < Fluent::Output
     values
   end
 
-  config_param :samples_limit, :integer, :default => 1000000
-  config_param :interval, :float, :default => 0.5
+  config_param :samples_limit, :integer, default: 1000000
+  config_param :interval, :float, default: 0.5
 
   attr_accessor :count, :last_checked
 
   def configure(conf)
     super
 
-    if @unit
-      @count_interval = case @unit
-                        when 'minute' then 60
-                        when 'hour' then 3600
-                        when 'day' then 86400
-                        else
-                          raise Fluent::ConfigError, "unit must be one of minute/hour/day"
-                        end
-    end
+    @count_interval = @unit if @unit
 
     if @input_tag_remove_prefix
       @removed_prefix_string = @input_tag_remove_prefix + '.'
@@ -65,7 +65,7 @@ class Fluent::NumericMonitorOutput < Fluent::Output
       raise Fluent::ConfigError, 'Specify both of output_per_tag and tag_prefix'
     end
     @tag_prefix_string = @tag_prefix + '.' if @output_per_tag
-    
+
     @count = count_initialized
     @mutex = Mutex.new
   end
@@ -102,15 +102,15 @@ class Fluent::NumericMonitorOutput < Fluent::Output
     # counts['tag'] = {:min => num, :max => num, :sum => num, :num => num [, :sample => [....]]}
     if @aggregate == :all
       if @percentiles
-        {'all' => {:min => nil, :max => nil, :sum => nil, :num => 0, :sample => []}}
+        {'all' => {min: nil, max: nil, sum: nil, num: 0, sample: []}}
       else
-        {'all' => {:min => nil, :max => nil, :sum => nil, :num => 0}}
+        {'all' => {min: nil, max: nil, sum: nil, num: 0}}
       end
     elsif keys
       values = if @percentiles
-                 Array.new(keys.length) {|i| {:min => nil, :max => nil, :sum => nil, :num => 0, :sample => []}}
+                 Array.new(keys.length) {|i| {min: nil, max: nil, sum: nil, num: 0, sample: []}}
                else
-                 Array.new(keys.length) {|i| {:min => nil, :max => nil, :sum => nil, :num => 0}}
+                 Array.new(keys.length) {|i| {min: nil, max: nil, sum: nil, num: 0}}
                end
       Hash[[keys, values].transpose]
     else
@@ -194,8 +194,8 @@ class Fluent::NumericMonitorOutput < Fluent::Output
     end
 
     @mutex.synchronize do
-      c = (@count[tag] ||= {:min => nil, :max => nil, :sum => nil, :num => 0})
-      
+      c = (@count[tag] ||= {min: nil, max: nil, sum: nil, num: 0})
+
       if c[:min].nil? or c[:min] > min
         c[:min] = min
       end
@@ -209,7 +209,7 @@ class Fluent::NumericMonitorOutput < Fluent::Output
         c[:sample] ||= []
         if c[:sample].size + sample.size > @samples_limit
           (c[:sample].size + sample.size - @samples_limit).times do
-            c[:sample].delete_at(rand(c[:sample].size)) 
+            c[:sample].delete_at(rand(c[:sample].size))
           end
         end
         c[:sample] += sample
