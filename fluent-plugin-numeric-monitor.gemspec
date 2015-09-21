@@ -7,7 +7,7 @@ Gem::Specification.new do |gem|
   gem.description   = %q{Fluentd plugin to calculate min/max/avg/Xpercentile values, and emit these data as message}
   gem.summary       = %q{Fluentd plugin to calculate min/max/avg/Xpercentile values}
   gem.homepage      = "https://github.com/tagomoris/fluent-plugin-numeric-monitor"
-  gem.license       = "APLv2"
+  gem.license       = "Apache-2.0"
 
   gem.files         = `git ls-files`.split($\)
   gem.executables   = gem.files.grep(%r{^bin/}).map{ |f| File.basename(f) }
