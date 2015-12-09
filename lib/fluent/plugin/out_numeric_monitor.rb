@@ -8,7 +8,8 @@ class Fluent::NumericMonitorOutput < Fluent::Output
 
   EMIT_STREAM_RECORDS = 100
 
-  config_param :count_interval, :time, default: 60
+  config_param :count_interval, :time, default: 60,
+               desc: 'The interval time to monitor in seconds.'
   config_param :unit, default: nil do |value|
     case value
     when 'minute' then 60
@@ -18,11 +19,21 @@ class Fluent::NumericMonitorOutput < Fluent::Output
       raise Fluent::ConfigError, "unit must be one of minute/hour/day"
     end
   end
-  config_param :tag, :string, default: 'monitor'
-  config_param :tag_prefix, :string, default: nil
+  config_param :tag, :string, default: 'monitor',
+               desc: 'The output tag.'
+  config_param :tag_prefix, :string, default: nil,
+               desc: <<-DESC
+The prefix string which will be added to the input tag.
+output_per_tag yes must be specified together.
+DESC
 
-  config_param :output_per_tag, :bool, default: false
-  config_param :aggregate, default: 'tag' do |val|
+  config_param :output_per_tag, :bool, default: false,
+               desc: <<-DESC
+Emit for each input tag.
+tag_prefix must be specified together.
+DESC
+  config_param :aggregate, default: 'tag',
+               desc: 'Calculate in each input tag separetely, or all records in a mass.' do |val|
     case val
     when 'tag' then :tag
     when 'all' then :all
@@ -30,10 +41,15 @@ class Fluent::NumericMonitorOutput < Fluent::Output
       raise Fluent::ConfigError, "aggregate MUST be one of 'tag' or 'all'"
     end
   end
-  config_param :input_tag_remove_prefix, :string, default: nil
-  config_param :monitor_key, :string
-  config_param :output_key_prefix, :string, default: nil
-  config_param :percentiles, default: nil do |val|
+  config_param :input_tag_remove_prefix, :string, default: nil,
+               desc: 'The prefix string which will be removed from the input tag.'
+  config_param :monitor_key, :string,
+               desc: 'The key to monitor in the event record.'
+  config_param :output_key_prefix, :string, default: nil,
+               desc: 'The prefix string which will be added to the output key.'
+  config_param :percentiles, default: nil,
+               desc: 'Activate the percentile monitoring. ' \
+                     'Must be specified between 1 and 99 by integer separeted by , (comma).' do |val|
     values = val.split(",").map(&:to_i)
     if values.select{|i| i < 1 or i > 99 }.size > 0
       raise Fluent::ConfigError, "percentiles MUST be specified between 1 and 99 by integer"
@@ -41,7 +57,8 @@ class Fluent::NumericMonitorOutput < Fluent::Output
     values
   end
 
-  config_param :samples_limit, :integer, default: 1000000
+  config_param :samples_limit, :integer, default: 1000000,
+               desc: 'The limit number of sampling.'
   config_param :interval, :float, default: 0.5
 
   attr_accessor :count, :last_checked
