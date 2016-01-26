@@ -13,7 +13,7 @@
 To calculate about HTTP requests duration (microseconds) in 'duraion', with 90 and 95 percentile values:
 
     <match apache.log.**>
-      type numeric_monitor
+      @type numeric_monitor
       unit minute
       tag monitor.duration
       aggregate all
