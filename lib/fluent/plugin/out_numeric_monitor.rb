@@ -6,6 +6,11 @@ class Fluent::NumericMonitorOutput < Fluent::Output
     define_method("log") { $log }
   end
 
+  # Define `router` method of v0.12 to support v0.10.57 or earlier
+  unless method_defined?(:router)
+    define_method("router") { Fluent::Engine }
+  end
+
   EMIT_STREAM_RECORDS = 100
 
   config_param :count_interval, :time, default: 60,
@@ -198,10 +203,10 @@ DESC
     if @output_per_tag
       time = Fluent::Engine.now
       flush.each do |tag, message|
-        Fluent::Engine.emit(@tag_prefix_string + tag, time, message)
+        router.emit(@tag_prefix_string + tag, time, message)
       end
     else
-      Fluent::Engine.emit(@tag, Fluent::Engine.now, flush)
+      router.emit(@tag, Fluent::Engine.now, flush)
     end
   end
 
