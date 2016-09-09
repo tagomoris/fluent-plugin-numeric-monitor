@@ -45,8 +45,26 @@ class NumericMonitorOutputTest < Test::Unit::TestCase
     assert_equal([80, 90], d.instance.percentiles)
   end
 
-  def test_count_initialized
-    #TODO
+  sub_test_case "#count_initialized" do
+    test "aggregate all" do
+      d = create_driver(CONFIG + %[aggregate all])
+      all = {"all" => {min: nil, max: nil, sum: nil, num: 0, sample: []}}
+      assert_equal(all, d.instance.count_initialized)
+    end
+
+    test "default" do
+      d = create_driver(CONFIG)
+      assert_equal({}, d.instance.count_initialized)
+    end
+
+    test "with keys" do
+      d = create_driver(CONFIG)
+      tag1 = "tag1"
+      tag2 = "tag2"
+      expected = {tag1 => {min: nil, max: nil, sum: nil, num: 0, sample: []},
+                 tag2 => {min: nil, max: nil, sum: nil, num: 0, sample: []}}
+      assert_equal(expected, d.instance.count_initialized([tag1, tag2]))
+    end
   end
 
   def test_countups
