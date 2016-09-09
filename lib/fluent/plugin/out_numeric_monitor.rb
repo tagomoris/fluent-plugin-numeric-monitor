@@ -1,5 +1,9 @@
-class Fluent::NumericMonitorOutput < Fluent::Output
+require 'fluent/plugin/output'
+
+class Fluent::Plugin::NumericMonitorOutput < Fluent::Plugin::Output
   Fluent::Plugin.register_output('numeric_monitor', self)
+
+  helpers :event_emitter
 
   # Define `log` method for v0.10.42 or earlier
   unless method_defined?(:log)
@@ -239,7 +243,7 @@ DESC
     end
   end
 
-  def emit(tag, es, chain)
+  def process(tag, es)
     min = nil
     max = nil
     sum = 0
@@ -270,7 +274,5 @@ DESC
       end
     end
     countups(tag, min, max, sum, num, sample)
-
-    chain.next
   end
 end

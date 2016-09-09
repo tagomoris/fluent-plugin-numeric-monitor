@@ -1,4 +1,5 @@
 require 'helper'
+require 'fluent/test/driver/output'
 
 class NumericMonitorOutputTest < Test::Unit::TestCase
   def setup
@@ -13,8 +14,8 @@ class NumericMonitorOutputTest < Test::Unit::TestCase
     percentiles 80,90
   ]
 
-  def create_driver(conf = CONFIG, tag='test.input')
-    Fluent::Test::OutputTestDriver.new(Fluent::NumericMonitorOutput, tag).configure(conf)
+  def create_driver(conf = CONFIG)
+    Fluent::Test::Driver::Output.new(Fluent::Plugin::NumericMonitorOutput).configure(conf)
   end
 
   def test_configure
@@ -54,19 +55,19 @@ class NumericMonitorOutputTest < Test::Unit::TestCase
   end
 
   def test_emit
-    d1 = create_driver(CONFIG, 'test.tag1')
-    d1.run do
+    d1 = create_driver(CONFIG)
+    d1.run(default_tag: 'test.tag1') do
       10.times do
-        d1.emit({'field1' => 0})
-        d1.emit({'field1' => '1'})
-        d1.emit({'field1' => 2})
-        d1.emit({'field1' => '3'})
-        d1.emit({'field1' => 4})
-        d1.emit({'field1' => 5})
-        d1.emit({'field1' => 6})
-        d1.emit({'field1' => 7})
-        d1.emit({'field1' => 8})
-        d1.emit({'field1' => 9})
+        d1.feed({'field1' => 0})
+        d1.feed({'field1' => '1'})
+        d1.feed({'field1' => 2})
+        d1.feed({'field1' => '3'})
+        d1.feed({'field1' => 4})
+        d1.feed({'field1' => 5})
+        d1.feed({'field1' => 6})
+        d1.feed({'field1' => 7})
+        d1.feed({'field1' => 8})
+        d1.feed({'field1' => 9})
       end
     end
     r1 = d1.instance.flush
@@ -87,20 +88,20 @@ class NumericMonitorOutputTest < Test::Unit::TestCase
       aggregate all
       monitor_key field1
       percentiles 80,90
-    ], 'test.tag1')
+    ])
 
-    d1.run do
+    d1.run(default_tag: 'test.tag1') do
       10.times do
-        d1.emit({'field1' => 0})
-        d1.emit({'field1' => '1'})
-        d1.emit({'field1' => 2})
-        d1.emit({'field1' => '3'})
-        d1.emit({'field1' => 4})
-        d1.emit({'field1' => 5})
-        d1.emit({'field1' => 6})
-        d1.emit({'field1' => 7})
-        d1.emit({'field1' => 8})
-        d1.emit({'field1' => 9})
+        d1.feed({'field1' => 0})
+        d1.feed({'field1' => '1'})
+        d1.feed({'field1' => 2})
+        d1.feed({'field1' => '3'})
+        d1.feed({'field1' => 4})
+        d1.feed({'field1' => 5})
+        d1.feed({'field1' => 6})
+        d1.feed({'field1' => 7})
+        d1.feed({'field1' => 8})
+        d1.feed({'field1' => 9})
       end
     end
     r1 = d1.instance.flush
@@ -118,11 +119,11 @@ class NumericMonitorOutputTest < Test::Unit::TestCase
       unit minute
       tag testmonitor
       monitor_key x1
-    ], 'test')
-    d.run do
-      d.emit({'x1' => 1})
-      d.emit({'x1' => 2})
-      d.emit({'x1' => 3})
+    ])
+    d.run(default_tag: 'test') do
+      d.feed({'x1' => 1})
+      d.feed({'x1' => 2})
+      d.feed({'x1' => 3})
     end
     r = d.instance.flush
     assert_equal 1, r['test_min']
@@ -137,27 +138,28 @@ class NumericMonitorOutputTest < Test::Unit::TestCase
       aggregate tag
       output_per_tag true
       tag_prefix tag_prefix
-    ], 'tag')
-    d.run do
-      d.tag = 'tag1'
-      d.emit({'field1' => 1})
-      d.emit({'field1' => 2})
-      d.emit({'field1' => 3})
-      d.tag = 'tag2'
-      d.emit({'field1' => 1})
-      d.emit({'field1' => 2})
-      d.emit({'field1' => 3})
+    ])
+    time = Time.now.to_i
+    d.run(default_tag: 'tag') do
+      tag1 = 'tag1'
+      d.feed(tag1, time, {'field1' => 1})
+      d.feed(tag1, time, {'field1' => 2})
+      d.feed(tag1, time, {'field1' => 3})
+      tag2 = 'tag2'
+      d.feed(tag2, time, {'field1' => 1})
+      d.feed(tag2, time, {'field1' => 2})
+      d.feed(tag2, time, {'field1' => 3})
+      d.instance.flush_emit
     end
-    d.instance.flush_emit
-    assert_equal 2, d.emits.size
-    tag, r = d.emits[0][0], d.emits[0][2]
+    assert_equal 2, d.events.size
+    tag, r = d.events[0][0], d.events[0][2]
     assert_equal 'tag_prefix.tag1', tag
     assert_equal 1, r['min']
     assert_equal 3, r['max']
     assert_equal 2, r['avg']
     assert_equal 6, r['sum']
     assert_equal 3, r['num']
-    tag, r = d.emits[1][0], d.emits[1][2]
+    tag, r = d.events[1][0], d.events[1][2]
     assert_equal 'tag_prefix.tag2', tag
     assert_equal 1, r['min']
     assert_equal 3, r['max']
@@ -169,20 +171,21 @@ class NumericMonitorOutputTest < Test::Unit::TestCase
       aggregate tag
       output_per_tag false
       tag output_tag
-    ], 'tag')
-    d.run do
-      d.tag = 'tag1'
-      d.emit({'field1' => 1})
-      d.emit({'field1' => 2})
-      d.emit({'field1' => 3})
-      d.tag = 'tag2'
-      d.emit({'field1' => 1})
-      d.emit({'field1' => 2})
-      d.emit({'field1' => 3})
+    ])
+    time = Time.now.to_i
+    d.run(default_tag: 'tag') do
+      tag1 = 'tag1'
+      d.feed(tag1, time, {'field1' => 1})
+      d.feed(tag1, time, {'field1' => 2})
+      d.feed(tag1, time, {'field1' => 3})
+      tag2 = 'tag2'
+      d.feed(tag2, time, {'field1' => 1})
+      d.feed(tag2, time, {'field1' => 2})
+      d.feed(tag2, time, {'field1' => 3})
+      d.instance.flush_emit
     end
-    d.instance.flush_emit
-    assert_equal 1, d.emits.size
-    tag, r = d.emits[0][0], d.emits[0][2]
+    assert_equal 1, d.events.size
+    tag, r = d.events[0][0], d.events[0][2]
     assert_equal 'output_tag', tag
     assert_equal 1, r['tag1_min']
     assert_equal 3, r['tag1_max']
@@ -199,21 +202,22 @@ class NumericMonitorOutputTest < Test::Unit::TestCase
       aggregate all
       output_per_tag true
       tag_prefix tag_prefix
-    ], 'tag')
-    d.run do
-      d.tag = 'tag1'
-      d.emit({'field1' => 1})
-      d.emit({'field1' => 2})
-      d.emit({'field1' => 3})
-      d.tag = 'tag2'
-      d.emit({'field1' => 1})
-      d.emit({'field1' => 2})
-      d.emit({'field1' => 3})
+    ])
+    time = Time.now.to_i
+    d.run(default_tag: 'tag') do
+      tag1 = 'tag1'
+      d.feed(tag1, time, {'field1' => 1})
+      d.feed(tag1, time, {'field1' => 2})
+      d.feed(tag1, time, {'field1' => 3})
+      tag2 = 'tag2'
+      d.feed(tag2, time, {'field1' => 1})
+      d.feed(tag2, time, {'field1' => 2})
+      d.feed(tag2, time, {'field1' => 3})
+      d.instance.flush_emit
     end
-    d.instance.flush_emit
-    assert_equal 1, d.emits.size
-    tag = d.emits[0][0]
-    r = d.emits[0][2]
+    assert_equal 1, d.events.size
+    tag = d.events[0][0]
+    r = d.events[0][2]
     assert_equal 'tag_prefix.all', tag
     assert_equal 1, r['min']
     assert_equal 3, r['max']
@@ -225,21 +229,22 @@ class NumericMonitorOutputTest < Test::Unit::TestCase
       aggregate all
       output_per_tag false
       tag output_tag
-    ], 'tag')
-    d.run do
-      d.tag = 'tag1'
-      d.emit({'field1' => 1})
-      d.emit({'field1' => 2})
-      d.emit({'field1' => 3})
-      d.tag = 'tag2'
-      d.emit({'field1' => 1})
-      d.emit({'field1' => 2})
-      d.emit({'field1' => 3})
+    ])
+    time = Time.now.to_i
+    d.run(default_tag: 'tag') do
+      tag1 = 'tag1'
+      d.feed(tag1, time, {'field1' => 1})
+      d.feed(tag1, time, {'field1' => 2})
+      d.feed(tag1, time, {'field1' => 3})
+      tag2 = 'tag2'
+      d.feed(tag2, time, {'field1' => 1})
+      d.feed(tag2, time, {'field1' => 2})
+      d.feed(tag2, time, {'field1' => 3})
+      d.instance.flush_emit
     end
-    d.instance.flush_emit
-    assert_equal 1, d.emits.size
-    tag = d.emits[0][0]
-    r = d.emits[0][2]
+    assert_equal 1, d.events.size
+    tag = d.events[0][0]
+    r = d.events[0][2]
     assert_equal 'output_tag', tag
     assert_equal 1, r['min']
     assert_equal 3, r['max']
@@ -254,27 +259,28 @@ class NumericMonitorOutputTest < Test::Unit::TestCase
       output_per_tag true
       tag_prefix tag_prefix
       output_key_prefix key_prefix
-    ], 'tag')
-    d.run do
-      d.tag = 'tag1'
-      d.emit({'field1' => 1})
-      d.emit({'field1' => 2})
-      d.emit({'field1' => 3})
-      d.tag = 'tag2'
-      d.emit({'field1' => 1})
-      d.emit({'field1' => 2})
-      d.emit({'field1' => 3})
+    ])
+    time = Time.now.to_i
+    d.run(default_tag: 'tag') do
+      tag1 = 'tag1'
+      d.feed(tag1, time, {'field1' => 1})
+      d.feed(tag1, time, {'field1' => 2})
+      d.feed(tag1, time, {'field1' => 3})
+      tag2 = 'tag2'
+      d.feed(tag2, time, {'field1' => 1})
+      d.feed(tag2, time, {'field1' => 2})
+      d.feed(tag2, time, {'field1' => 3})
+      d.instance.flush_emit
     end
-    d.instance.flush_emit
-    assert_equal 2, d.emits.size
-    tag, r = d.emits[0][0], d.emits[0][2]
+    assert_equal 2, d.events.size
+    tag, r = d.events[0][0], d.events[0][2]
     assert_equal 'tag_prefix.tag1', tag
     assert_equal 1, r['key_prefix_min']
     assert_equal 3, r['key_prefix_max']
     assert_equal 2, r['key_prefix_avg']
     assert_equal 6, r['key_prefix_sum']
     assert_equal 3, r['key_prefix_num']
-    tag, r = d.emits[1][0], d.emits[1][2]
+    tag, r = d.events[1][0], d.events[1][2]
     assert_equal 'tag_prefix.tag2', tag
     assert_equal 1, r['key_prefix_min']
     assert_equal 3, r['key_prefix_max']
@@ -287,20 +293,21 @@ class NumericMonitorOutputTest < Test::Unit::TestCase
       output_per_tag false
       tag output_tag
       output_key_prefix key_prefix
-    ], 'tag')
-    d.run do
-      d.tag = 'tag1'
-      d.emit({'field1' => 1})
-      d.emit({'field1' => 2})
-      d.emit({'field1' => 3})
-      d.tag = 'tag2'
-      d.emit({'field1' => 1})
-      d.emit({'field1' => 2})
-      d.emit({'field1' => 3})
+    ])
+    time = Time.now.to_i
+    d.run(default_tag: 'tag') do
+      tag1 = 'tag1'
+      d.feed(tag1, time, {'field1' => 1})
+      d.feed(tag1, time, {'field1' => 2})
+      d.feed(tag1, time, {'field1' => 3})
+      tag2 = 'tag2'
+      d.feed(tag2, time, {'field1' => 1})
+      d.feed(tag2, time, {'field1' => 2})
+      d.feed(tag2, time, {'field1' => 3})
+      d.instance.flush_emit
     end
-    d.instance.flush_emit
-    assert_equal 1, d.emits.size
-    tag, r = d.emits[0][0], d.emits[0][2]
+    assert_equal 1, d.events.size
+    tag, r = d.events[0][0], d.events[0][2]
     assert_equal 'output_tag', tag
     assert_equal 1, r['key_prefix_tag1_min']
     assert_equal 3, r['key_prefix_tag1_max']
@@ -318,21 +325,22 @@ class NumericMonitorOutputTest < Test::Unit::TestCase
       output_per_tag true
       tag_prefix tag_prefix
       output_key_prefix key_prefix
-    ], 'tag')
-    d.run do
-      d.tag = 'tag1'
-      d.emit({'field1' => 1})
-      d.emit({'field1' => 2})
-      d.emit({'field1' => 3})
-      d.tag = 'tag2'
-      d.emit({'field1' => 1})
-      d.emit({'field1' => 2})
-      d.emit({'field1' => 3})
+    ])
+    time = Time.now.to_i
+    d.run(default_tag: 'tag1') do
+      tag1 = 'tag1'
+      d.feed(tag1, time, {'field1' => 1})
+      d.feed(tag1, time, {'field1' => 2})
+      d.feed(tag1, time, {'field1' => 3})
+      tag2 = 'tag2'
+      d.feed(tag2, time, {'field1' => 1})
+      d.feed(tag2, time, {'field1' => 2})
+      d.feed(tag2, time, {'field1' => 3})
+      d.instance.flush_emit
     end
-    d.instance.flush_emit
-    assert_equal 1, d.emits.size
-    tag = d.emits[0][0]
-    r = d.emits[0][2]
+    assert_equal 1, d.events.size
+    tag = d.events[0][0]
+    r = d.events[0][2]
     assert_equal 'tag_prefix.all', tag
     assert_equal 1, r['key_prefix_min']
     assert_equal 3, r['key_prefix_max']
@@ -345,21 +353,22 @@ class NumericMonitorOutputTest < Test::Unit::TestCase
       output_per_tag false
       tag output_tag
       output_key_prefix key_prefix
-    ], 'tag')
-    d.run do
-      d.tag = 'tag1'
-      d.emit({'field1' => 1})
-      d.emit({'field1' => 2})
-      d.emit({'field1' => 3})
-      d.tag = 'tag2'
-      d.emit({'field1' => 1})
-      d.emit({'field1' => 2})
-      d.emit({'field1' => 3})
+    ])
+    time = Time.now.to_i
+    d.run(default_tag: 'tag') do
+      tag1 = 'tag1'
+      d.feed(tag1, time, {'field1' => 1})
+      d.feed(tag1, time, {'field1' => 2})
+      d.feed(tag1, time, {'field1' => 3})
+      tag2 = 'tag2'
+      d.feed(tag2, time, {'field1' => 1})
+      d.feed(tag2, time, {'field1' => 2})
+      d.feed(tag2, time, {'field1' => 3})
+      d.instance.flush_emit
     end
-    d.instance.flush_emit
-    assert_equal 1, d.emits.size
-    tag = d.emits[0][0]
-    r = d.emits[0][2]
+    assert_equal 1, d.events.size
+    tag = d.events[0][0]
+    r = d.events[0][2]
     assert_equal 'output_tag', tag
     assert_equal 1, r['key_prefix_min']
     assert_equal 3, r['key_prefix_max']
