@@ -20,15 +20,15 @@ class NumericMonitorOutputTest < Test::Unit::TestCase
 
   def test_configure
     assert_raise(Fluent::ConfigError) {
-      d = create_driver('')
+      create_driver('')
     }
     assert_raise(Fluent::ConfigError) {
-      d = create_driver CONFIG + %[
+      create_driver CONFIG + %[
         output_per_tag true
       ]
     }
     assert_raise(Fluent::ConfigError) {
-      d = create_driver CONFIG + %[
+      create_driver CONFIG + %[
         tag_prefix prefix
       ]
     }
