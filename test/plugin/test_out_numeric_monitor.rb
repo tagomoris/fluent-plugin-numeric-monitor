@@ -32,7 +32,17 @@ class NumericMonitorOutputTest < Test::Unit::TestCase
         tag_prefix prefix
       ]
     }
-    #TODO
+    d = create_driver(CONFIG)
+    assert_equal(60, d.instance.count_interval)
+    assert_equal(60, d.instance.unit)
+    assert_equal("monitor.test", d.instance.tag)
+    assert_equal(0.5, d.instance.interval)
+    assert_nil(d.instance.tag_prefix)
+    assert_false(d.instance.output_per_tag)
+    assert_equal("tag", d.instance.aggregate)
+    assert_equal("test", d.instance.input_tag_remove_prefix)
+    assert_equal("field1", d.instance.monitor_key)
+    assert_equal([80, 90], d.instance.percentiles)
   end
 
   def test_count_initialized
