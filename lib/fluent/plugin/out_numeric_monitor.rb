@@ -3,7 +3,7 @@ require 'fluent/plugin/output'
 class Fluent::Plugin::NumericMonitorOutput < Fluent::Plugin::Output
   Fluent::Plugin.register_output('numeric_monitor', self)
 
-  helpers :event_emitter
+  helpers :event_emitter, :timer
 
   EMIT_STREAM_RECORDS = 100
 
@@ -93,25 +93,18 @@ DESC
 
   def shutdown
     super
-    @watcher.terminate
-    @watcher.join
   end
 
   def start_watch
     # for internal, or tests
-    @watcher = Thread.new(&method(:watch))
+    @last_checked = Fluent::Engine.now
+    timer_execute(:out_numeric_counter_watcher, @interval, &method(:watch))
   end
 
   def watch
-    @last_checked = Fluent::Engine.now
-    while true
-      sleep @interval
-      if Fluent::Engine.now - @last_checked >= @count_interval
-        now = Fluent::Engine.now
-        flush_emit
-        @last_checked = now
-      end
-    end
+    now = Fluent::Engine.now
+    flush_emit
+    @last_checked = now
   end
 
   def count_initialized(keys=nil)
