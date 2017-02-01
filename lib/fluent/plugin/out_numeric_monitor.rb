@@ -173,7 +173,11 @@ class Fluent::Plugin::NumericMonitorOutput < Fluent::Plugin::Output
     if @output_per_tag
       time = Fluent::Engine.now
       flush.each do |tag, message|
-        router.emit(@tag_prefix_string + tag, time, message)
+        if @tag_prefix_string
+          router.emit(@tag_prefix_string + tag, time, message)
+        else
+          router.emit(tag, time, message)
+        end
       end
     else
       router.emit(@tag, Fluent::Engine.now, flush)
