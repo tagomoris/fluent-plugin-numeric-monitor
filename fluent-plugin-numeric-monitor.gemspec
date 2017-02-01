@@ -1,7 +1,7 @@
 # -*- encoding: utf-8 -*-
 Gem::Specification.new do |gem|
   gem.name          = "fluent-plugin-numeric-monitor"
-  gem.version       = "0.2.0"
+  gem.version       = "1.0.0"
   gem.authors       = ["TAGOMORI Satoshi"]
   gem.email         = ["tagomoris@gmail.com"]
   gem.description   = %q{Fluentd plugin to calculate min/max/avg/Xpercentile values, and emit these data as message}
@@ -16,5 +16,5 @@ Gem::Specification.new do |gem|
 
   gem.add_development_dependency "rake"
   gem.add_development_dependency "test-unit"
-  gem.add_runtime_dependency "fluentd", "< 0.14.0"
+  gem.add_runtime_dependency "fluentd", ">= 0.14.0"
 end
