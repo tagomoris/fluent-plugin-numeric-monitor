@@ -7,65 +7,48 @@ class Fluent::Plugin::NumericMonitorOutput < Fluent::Plugin::Output
 
   EMIT_STREAM_RECORDS = 100
 
-  config_param :count_interval, :time, default: 60,
-               desc: 'The interval time to monitor in seconds.'
-  config_param :unit, default: nil do |value|
-    case value
-    when 'minute' then 60
-    when 'hour' then 3600
-    when 'day' then 86400
-    else
-      raise Fluent::ConfigError, "unit must be one of minute/hour/day"
-    end
-  end
-  config_param :tag, :string, default: 'monitor',
-               desc: 'The output tag.'
-  config_param :tag_prefix, :string, default: nil,
-               desc: <<-DESC
-The prefix string which will be added to the input tag.
-output_per_tag yes must be specified together.
-DESC
+  config_param :count_interval, :time, default: 60, desc: 'The interval time to monitor in seconds.'
+  config_param :unit, :enum, list: [:minute, :hour, :day], default: nil
+  config_param :tag, :string, default: 'monitor', desc: 'The output tag.'
+  config_param :aggregate, :enum, list: [:tag, :all], default: :tag, desc: "Calculate input events per tags, or all events"
 
   config_param :output_per_tag, :bool, default: false,
-               desc: <<-DESC
-Emit for each input tag.
-tag_prefix must be specified together.
-DESC
-  config_param :aggregate, default: 'tag',
-               desc: 'Calculate in each input tag separetely, or all records in a mass.' do |val|
-    case val
-    when 'tag' then :tag
-    when 'all' then :all
-    else
-      raise Fluent::ConfigError, "aggregate MUST be one of 'tag' or 'all'"
-    end
-  end
-  config_param :input_tag_remove_prefix, :string, default: nil,
-               desc: 'The prefix string which will be removed from the input tag.'
-  config_param :monitor_key, :string,
-               desc: 'The key to monitor in the event record.'
+               desc: 'Produce monitor result per input tags.'
+
+  config_param :monitor_key, :string, desc: 'The key to monitor in the event record.'
   config_param :output_key_prefix, :string, default: nil,
                desc: 'The prefix string which will be added to the output key.'
-  config_param :percentiles, default: nil,
+  config_param :percentiles, :array, value_type: :integer, default: nil,
                desc: 'Activate the percentile monitoring. ' \
-                     'Must be specified between 1 and 99 by integer separeted by , (comma).' do |val|
-    values = val.split(",").map(&:to_i)
-    if values.select{|i| i < 1 or i > 99 }.size > 0
-      raise Fluent::ConfigError, "percentiles MUST be specified between 1 and 99 by integer"
-    end
-    values
-  end
+                     'Must be specified between 1 and 99 by integer separeted by , (comma).'
 
   config_param :samples_limit, :integer, default: 1000000,
                desc: 'The limit number of sampling.'
-  config_param :interval, :float, default: 0.5
+
+  config_param :tag_prefix, :string, default: nil,
+               desc: 'The prefix string to be added to input tags. Use with "output_per_tag yes".',
+               deprecated: "Use @label routing instead."
+  config_param :input_tag_remove_prefix, :string, default: nil,
+               desc: 'The prefix string which will be removed from the input tag.',
+               deprecated: 'Use @label routing instead.'
+
 
   attr_accessor :count, :last_checked
 
   def configure(conf)
+    label_routing_specified = conf.has_key?('@label')
+
     super
 
-    @count_interval = @unit if @unit
+    if @unit
+      @count_interval = case @unit
+                        when :minute then 60
+                        when :hour then 3600
+                        when :day then 86400
+                        else
+                          raise "unknown unit: #{@unit}"
+                        end
+    end
 
     if @input_tag_remove_prefix
       @removed_prefix_string = @input_tag_remove_prefix + '.'
@@ -77,10 +60,14 @@ DESC
       @key_prefix_string = @output_key_prefix + '_'
     end
 
-    if (@output_per_tag || @tag_prefix) && (!@output_per_tag || !@tag_prefix)
-      raise Fluent::ConfigError, 'Specify both of output_per_tag and tag_prefix'
+    if @output_per_tag && (!label_routing_specified && !@tag_prefix)
+      raise Fluent::ConfigError, "specify @label to route output events into other <label> sections."
     end
-    @tag_prefix_string = @tag_prefix + '.' if @output_per_tag
+    if @output_per_tag && @tag_prefix
+      @tag_prefix_string = @tag_prefix + '.'
+    else
+      @tag_prefix_string = nil
+    end
 
     @count = count_initialized
     @mutex = Mutex.new
@@ -88,23 +75,13 @@ DESC
 
   def start
     super
-    start_watch
-  end
 
-  def shutdown
-    super
-  end
-
-  def start_watch
-    # for internal, or tests
     @last_checked = Fluent::Engine.now
-    timer_execute(:out_numeric_counter_watcher, @interval, &method(:watch))
-  end
-
-  def watch
-    now = Fluent::Engine.now
-    flush_emit
-    @last_checked = now
+    timer_execute(:out_numeric_counter_watcher, @count_interval) do
+      now = Fluent::Engine.now
+      flush_emit
+      @last_checked = now
+    end
   end
 
   def count_initialized(keys=nil)
