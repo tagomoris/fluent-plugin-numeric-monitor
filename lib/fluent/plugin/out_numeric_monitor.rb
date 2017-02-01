@@ -67,8 +67,16 @@ class Fluent::Plugin::NumericMonitorOutput < Fluent::Plugin::Output
       @tag_prefix_string = nil
     end
 
+    if system_config.workers > 1
+      log.warn "Fluentd is now working with multi process workers, and numeric_monitor plugin will produce monitor results in each separated processes."
+    end
+
     @count = count_initialized
     @mutex = Mutex.new
+  end
+
+  def multi_workers_ready?
+    true
   end
 
   def start
