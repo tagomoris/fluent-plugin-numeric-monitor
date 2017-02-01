@@ -1,15 +1,9 @@
-class Fluent::NumericMonitorOutput < Fluent::Output
+require 'fluent/plugin/output'
+
+class Fluent::Plugin::NumericMonitorOutput < Fluent::Plugin::Output
   Fluent::Plugin.register_output('numeric_monitor', self)
 
-  # Define `log` method for v0.10.42 or earlier
-  unless method_defined?(:log)
-    define_method("log") { $log }
-  end
-
-  # Define `router` method of v0.12 to support v0.10.57 or earlier
-  unless method_defined?(:router)
-    define_method("router") { Fluent::Engine }
-  end
+  helpers :event_emitter, :timer
 
   EMIT_STREAM_RECORDS = 100
 
@@ -99,25 +93,18 @@ DESC
 
   def shutdown
     super
-    @watcher.terminate
-    @watcher.join
   end
 
   def start_watch
     # for internal, or tests
-    @watcher = Thread.new(&method(:watch))
+    @last_checked = Fluent::Engine.now
+    timer_execute(:out_numeric_counter_watcher, @interval, &method(:watch))
   end
 
   def watch
-    @last_checked = Fluent::Engine.now
-    while true
-      sleep @interval
-      if Fluent::Engine.now - @last_checked >= @count_interval
-        now = Fluent::Engine.now
-        flush_emit
-        @last_checked = now
-      end
-    end
+    now = Fluent::Engine.now
+    flush_emit
+    @last_checked = now
   end
 
   def count_initialized(keys=nil)
@@ -239,7 +226,7 @@ DESC
     end
   end
 
-  def emit(tag, es, chain)
+  def process(tag, es)
     min = nil
     max = nil
     sum = 0
@@ -270,7 +257,5 @@ DESC
       end
     end
     countups(tag, min, max, sum, num, sample)
-
-    chain.next
   end
 end
