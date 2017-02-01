@@ -14,6 +14,8 @@ class Fluent::Plugin::NumericMonitorOutput < Fluent::Plugin::Output
 
   config_param :output_per_tag, :bool, default: false,
                desc: 'Produce monitor result per input tags.'
+  config_param :input_tag_remove_prefix, :string, default: nil,
+               desc: 'The prefix string which will be removed from the input tag.'
 
   config_param :monitor_key, :string, desc: 'The key to monitor in the event record.'
   config_param :output_key_prefix, :string, default: nil,
@@ -27,11 +29,7 @@ class Fluent::Plugin::NumericMonitorOutput < Fluent::Plugin::Output
 
   config_param :tag_prefix, :string, default: nil,
                desc: 'The prefix string to be added to input tags. Use with "output_per_tag yes".',
-               deprecated: "Use @label routing instead."
-  config_param :input_tag_remove_prefix, :string, default: nil,
-               desc: 'The prefix string which will be removed from the input tag.',
                deprecated: 'Use @label routing instead.'
-
 
   attr_accessor :count, :last_checked
 
