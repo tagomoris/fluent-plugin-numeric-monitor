@@ -1,9 +1,5 @@
 # fluent-plugin-numeric-monitor
 
-## Component
-
-### NumericMonitorOutput
-
 [Fluentd](http://fluentd.org) plugin to calculate min/max/avg/sum and specified percentile values (and 'num' of matched messages), which used in notifications (such as fluent-plugin-notifier)
 
 ## Configuration
@@ -14,13 +10,23 @@ To calculate about HTTP requests duration (microseconds) in 'duraion', with 90 a
 
     <match apache.log.**>
       @type numeric_monitor
-      unit minute
+      
+      @label @monitor_result
       tag monitor.duration
+      
+      unit minute
+      
       aggregate all
-      input_tag_remove_prefix apache.log
       monitor_key duration
       percentiles 90,95
+      input_tag_remove_prefix apache.log
     </match>
+    
+    <label @monitor_result>
+      <match monitor.duration>
+        # output result data into visualization tools or ...
+      </match>
+    </label>
 
 Output messages like:
 
@@ -43,7 +49,7 @@ Output messages like:
 
 * tag\_prefix
 
-    The prefix string which will be added to the input tag. `output_per_tag yes` must be specified together. 
+    The prefix string which will be added to the input tag. `output_per_tag yes` must be specified together (deprecated: use `@label` for event routing instead).
     
 * input\_tag\_remove\_prefix
 
