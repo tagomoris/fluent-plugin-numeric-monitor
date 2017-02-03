@@ -2,6 +2,13 @@
 
 [Fluentd](http://fluentd.org) plugin to calculate min/max/avg/sum and specified percentile values (and 'num' of matched messages), which used in notifications (such as fluent-plugin-notifier)
 
+## Requirements
+
+| fluent-plugin-numeric-monitor | fluentd    | ruby   |
+|-------------------------------|------------|--------|
+| >= 1.0.0                      | >= v0.14.0 | >= 2.1 |
+| <  1.0.0                      | <  v0.14.0 | >= 1.9 |
+
 ## Configuration
 
 ### NumericMonitorOutput
