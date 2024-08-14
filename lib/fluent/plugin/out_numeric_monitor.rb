@@ -192,10 +192,10 @@ class Fluent::Plugin::NumericMonitorOutput < Fluent::Plugin::Output
     @mutex.synchronize do
       c = (@count[tag] ||= {min: nil, max: nil, sum: nil, num: 0})
 
-      if c[:min].nil? or c[:min] > min
+      if c[:min].nil? or (min and c[:min] > min)
         c[:min] = min
       end
-      if c[:max].nil? or c[:max] < max
+      if c[:max].nil? or (max and c[:max] < max)
         c[:max] = max
       end
       c[:sum] = (c[:sum] || 0) + sum
