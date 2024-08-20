@@ -407,31 +407,26 @@ class NumericMonitorOutputTest < Test::Unit::TestCase
 
   def test_emit_with_nil_values
     d = create_driver(CONFIG)
-    begin
-      d.run(default_tag: 'test.tag1') do
-        10.times do
-          d.feed({'field1' => nil})
-          d.feed({'field1' => 1})
-          d.feed({'field1' => 2})
-          d.feed({'field1' => 3})
-          d.feed({'field1' => 4})
-          d.feed({'field1' => 5})
-          d.feed({'field1' => 6})
-          d.feed({'field1' => 7})
-          d.feed({'field1' => 8})
-          d.feed({'field1' => 9})
-        end
+    d.run(default_tag: 'test.tag1') do
+      10.times do
+        d.feed({'field1' => nil})
+        d.feed({'field1' => 1})
+        d.feed({'field1' => 2})
+        d.feed({'field1' => 3})
+        d.feed({'field1' => 4})
+        d.feed({'field1' => 5})
+        d.feed({'field1' => 6})
+        d.feed({'field1' => 7})
+        d.feed({'field1' => 8})
+        d.feed({'field1' => 9})
       end
-      r1 = d.instance.flush
-      assert_equal 1, r1['tag1_min']
-      assert_equal 9, r1['tag1_max']
-      assert_equal 5, r1['tag1_avg']
-      assert_equal 450, r1['tag1_sum']
-      assert_equal 8, r1['tag1_percentile_80']
-      assert_equal 9, r1['tag1_percentile_90']
-      assert_equal 90, r1['tag1_num']
-    end
-  rescue => e
-    flunk(e)
+    r1 = d.instance.flush
+    assert_equal 1, r1['tag1_min']
+    assert_equal 9, r1['tag1_max']
+    assert_equal 5, r1['tag1_avg']
+    assert_equal 450, r1['tag1_sum']
+    assert_equal 8, r1['tag1_percentile_80']
+    assert_equal 9, r1['tag1_percentile_90']
+    assert_equal 90, r1['tag1_num']
   end
 end
