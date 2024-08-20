@@ -408,8 +408,8 @@ class NumericMonitorOutputTest < Test::Unit::TestCase
   def test_emit_with_nil_values
     d = create_driver(CONFIG)
     d.run(default_tag: 'test.tag1') do
-      d.feed({'field1' => nil})
       d.feed({'field1' => 1})
+      d.feed({'field1' => nil})
       d.feed({'field1' => 2})
       d.feed({'field1' => 3})
       d.feed({'field1' => 4})
